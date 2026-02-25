@@ -8,12 +8,10 @@ from PIL import Image
 from scipy.ndimage import gaussian_filter
 
 def tif_to_heightmap(should_smooth=False, smooth_amount=2):
-    # 1. Setup Tkinter
     root = tk.Tk()
     root.withdraw()
     root.attributes('-topmost', True)
-    
-    # Select Source File
+
     tif_file = filedialog.askopenfilename(
         title="Select a Tif file",
         filetypes=[("TIF files", "*.tif"), ("TIFF files", "*.tiff")]
@@ -37,6 +35,7 @@ def tif_to_heightmap(should_smooth=False, smooth_amount=2):
         unreal.log_warning("No destination folder selected.")
         return (None, unreal.Vector2D(x=0.0, y=0.0))
 
+    # Convert absolute OS path to Unreal internal asset path format
     rel_path = os.path.relpath(chosen_disk_folder, absolute_content_path).replace("\\", "/")
     
     if rel_path == ".":
@@ -57,12 +56,14 @@ def tif_to_heightmap(should_smooth=False, smooth_amount=2):
     try:
         with rasterio.open(tif_file) as dataset:
             data = dataset.read(1)
+            # Use masked array to prevent NoData values from skewing normalization
             if dataset.nodata is not None:
                 data = np.ma.masked_equal(data, dataset.nodata)
             
             tif_min = float(data.min())
             tif_max = float(data.max())
       
+            # Map height values to full 16-bit range (0-65535) for maximum precision
             if tif_max > tif_min:
                 normalized = ((data - tif_min) / (tif_max - tif_min) * 65535.0).astype(np.uint16)
             else:
@@ -74,6 +75,7 @@ def tif_to_heightmap(should_smooth=False, smooth_amount=2):
                 blurred_float = gaussian_filter(float_data, sigma=smooth_amount)
                 normalized = np.clip(blurred_float, 0, 65535).astype(np.uint16)
 
+            # 'I;16' mode ensures the PNG is saved as true 16-bit grayscale
             Image.fromarray(normalized, mode='I;16').save(final_png_path)
 
         
@@ -91,11 +93,13 @@ def tif_to_heightmap(should_smooth=False, smooth_amount=2):
         texture_asset = unreal.load_object(None, texture_full_path)
         
         if texture_asset:
+            # VectorDisplacementMap prevents 8-bit compression, preserving 16-bit height detail
             texture_asset.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_VECTOR_DISPLACEMENTMAP)
             texture_asset.set_editor_property('srgb', False)
             unreal.EditorAssetLibrary.save_asset(texture_full_path)
             unreal.EditorAssetLibrary.sync_browser_to_objects([texture_full_path])
 
+        # Copy file path to clipboard for easy pasting into Landscape Import UI
         os.system(f'echo {final_png_path}| clip')
         unreal.log(f"Imported to: {asset_path}")
         return (texture_asset, unreal.Vector2D(x=tif_min, y=tif_max))
