@@ -1,7 +1,24 @@
+import sys
 import os
+import unreal
+
+# --- MODULE PATH INJECTION ---
+# Automatically find the plugin's lib folder relative to this script's location
+# This ensures that bundled dependencies work on any machine without manual installation
+plugin_dir = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_plugins_dir())
+site_packages_path = os.path.normpath(os.path.join(plugin_dir, "Tif_Converter", "Content", "Python", "lib", "site-packages"))
+
+if os.path.exists(site_packages_path):
+    if site_packages_path not in sys.path:
+        # Insert at index 0 to prioritize these versions over any local system versions
+        sys.path.insert(0, site_packages_path)
+        unreal.log(f"Tif_Converter: Successfully added dependencies to sys.path: {site_packages_path}")
+else:
+    unreal.log_error(f"Tif_Converter: Could not find site-packages at {site_packages_path}. Check plugin folder structure.")
+# -----------------------------
+
 import numpy as np
 import rasterio
-import unreal
 import tkinter as tk
 from tkinter import filedialog, simpledialog 
 from PIL import Image
