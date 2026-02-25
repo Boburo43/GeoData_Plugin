@@ -48,9 +48,9 @@ This ensures accurate terrain representation and prevents common heightmap impor
 
 ### 3.2 Installation Steps
 
-1. Copy the Tif_Converter folder into:
+1. In file explorer copy the Tif_Converter folder into:
 
-   <ProjectFolder>/Plugins/
+   <ProjectFolder>MyProject/Plugins/
 
 2. Launch Unreal Engine.
 3. Navigate to Edit → Plugins.
