@@ -4,7 +4,7 @@
 
 Plugin Name: Tif Converter  
 Current Version: 1.0.0  
-Tested Unreal Engine Versions: 5.6+  
+Tested Unreal Engine Versions: 5.7+  
 Supported Platform: Windows  
 
 ### Intended Audience
@@ -43,7 +43,7 @@ This ensures accurate terrain representation and prevents common heightmap impor
 
 ### 3.1 Requirements
 
-- Unreal Engine 5.6 or newer  
+- Unreal Engine 5.7 or newer  
   (Earlier versions may work but are not officially tested.)
 
 ### 3.2 Installation Steps
