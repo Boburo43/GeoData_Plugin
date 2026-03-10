@@ -3,7 +3,7 @@ import numpy as np
 import rasterio
 import unreal
 import tkinter as tk
-from tkinter import filedialog, simpledialog 
+from tkinter import filedialog, simpledialog, messagebox
 from PIL import Image
 from scipy.ndimage import gaussian_filter
 
@@ -13,17 +13,30 @@ def tif_to_heightmap(should_smooth=False, smooth_amount=2):
     root.withdraw()
     root.attributes('-topmost', True)
     
-    # Select Source File
-    tif_file = filedialog.askopenfilename(
-        title="Select a Tif file",
-        filetypes=[("TIF files", "*.tif"), ("TIFF files", "*.tiff")]
-    )
+    # Select Source File (loops until square TIF is chosen or cancelled)
+    while True:
+        tif_file = filedialog.askopenfilename(
+            title="Select a Tif file",
+            filetypes=[("TIF files", "*.tif"), ("TIFF files", "*.tiff")]
+        )
 
-    if not tif_file:
-        root.destroy()
-        return (None, unreal.Vector2D(x=0.0, y=0.0))
+        if not tif_file:
+            root.destroy()
+            return (None, unreal.Vector2D(x=0.0, y=0.0))
 
-    
+        with rasterio.open(tif_file) as dataset:
+            width = dataset.width
+            height = dataset.height
+
+        if width == height:
+            break
+        else:
+            messagebox.showwarning(
+                "Invalid TIF",
+                "Tif file choosen is not square please choose anouter",
+                parent=root
+            )
+
     project_content_dir = unreal.Paths.project_content_dir()
     absolute_content_path = unreal.Paths.convert_relative_path_to_full(project_content_dir)
 
@@ -68,7 +81,6 @@ def tif_to_heightmap(should_smooth=False, smooth_amount=2):
             else:
                 normalized = np.zeros_like(data, dtype=np.uint16)
             
-           
             if should_smooth:
                 float_data = normalized.astype(np.float32)
                 blurred_float = gaussian_filter(float_data, sigma=smooth_amount)
@@ -76,7 +88,6 @@ def tif_to_heightmap(should_smooth=False, smooth_amount=2):
 
             Image.fromarray(normalized, mode='I;16').save(final_png_path)
 
-        
         import_task = unreal.AssetImportTask()
         import_task.filename = final_png_path
         import_task.destination_path = asset_path
